@@ -52,6 +52,20 @@ qflow 的 `venue/bitget/uta_v3/*` 是照文档写的、未真机测过。单独�
 
 **门**：撤单 p50 ≤ 50 ms 进 Step 1；50~100 ms 则 Run A 的 C1 预期无效，仍可跑但要加 Run B；> 100 ms 停下重新评估通道。
 
+#### Step 0 结果（2026-11-06 UTC 08:58–09:14，BG 会话，test2 出口 35.75.175.46，BTCUSDT）
+
+| 项 | 结果 | 对 Run A 的含义 |
+|---|---|---|
+| 账户 | v3 WS 登录 OK；`accountMode=unified`、**`holdMode=hedge_mode`**（双向持仓，posSide 必填）、`assetMode=multi_assets`、杠杆 20 | 做市只有一份净库存，双向模式会让买卖两侧各开一腿而不是对冲掉 ⇒ **Run A 前切单向持仓**（或引擎按 tradeSide=close 显式平） |
+| 撤单延迟（其他时段，n=100） | 发撤 → 推送终态 **p50 14.2 / p90 41.0 / p99 462 ms**；发撤 → ack p50 10.1 / p90 37.2 / p99 237 | **过门**（≤ 50 ms），C1 可按 ≤ 20 ms「质量模式」口径预期；但 p99 近半秒，被狙击占比不会归零。UTC 13~15 的 100 次待补 |
+| 穿价 post_only | 下单 ack **不拒**（code=0），之后订单推送 `orderStatus=cancelled, cancelReason=post_only_fill_cancel` | 拒单只能在推送里看到，C1 重挂的穿价判定与「子单终态」必须以推送为准，ack 不算在簿 |
+| 撤已成交单 | `event=error, code=25204 Order does not exist` | 撤单失败 = 已成交的信号（本身是毒性指标） |
+| 成交回报（topic=order） | `cumExecQty / cumExecValue / avgPrice / orderStatus=filled / side / tradeSide / holdSide / reduceOnly / createdTime / updatedTime / cancelReason / feeDetail[{feeCoin, fee}] / orderId / clientOid / matchType` | **没有逐笔成交时间与 tradeId** ⇒ §9.2 要求的 tradeId / 成交时刻须另订 fill 频道或查成交历史，Run A 前补 |
+| 费率验证 | maker 0.001 BTC @76093.5 fee = −0.003804675 USDT = **−0.5 bp**；taker 平仓 0.003 @76099.4 fee = +0.03424473 = **+1.5 bp** | 费率真值确认 |
+| 意外 | 离 touch 50 tick（5 USD）的循环单 3/100 在撤单到达前被扫成交；首笔平仓 IOC 只放 bid−2 USD 未成交（`ioc_not_full_cancel`），裸露 0.003 BTC 约 15 min 后才平掉 | ① Bitget BTC 几秒能动 5 USD，队列与波动比 HTX「活」；② **减仓 IOC 必须放对手 touch 并带容差**（策略文档 §4.5），探针修复后再跑 |
+
+下一步（BG 会话）：修探针（循环中检测到成交立即平；IOC 价位放宽）→ 补 UTC 13~15 的 100 次。
+
 ### Step 1 · Run A（C1 开），直到 at-touch 成交 ≥ 300 笔
 
 - 样本量估计：HTX at-touch 成交率 1.49%，Bitget 队列厚一倍，按 1% 估 ⇒ 需 ≈ 3 万子单；双边、每子单在簿中位 3~5 s ⇒ 约 **2~4 天**。若 3 天不到 150 笔，说明 Bitget 队列太厚，α 标定要改为「只在 queue_ahead ≤ 1 BTC 时挂」的子集（R3-a 该桶成交率 6.9%）。
@@ -90,7 +104,8 @@ qflow 的 `venue/bitget/uta_v3/*` 是照文档写的、未真机测过。单独�
 > 2026-11-06 BG 会话核查结果：Step 0 **尚不能开工**，没下过任何单。① 2026-08-03 实测当时的 key 是 **Classic** 账户（v3 WS 30005、REST 40084），除非之后升级或换 key，Step 0 第 1 步直接失败；仓库现役 `.env` 没有非空 Bitget key。② 旧探针 `probe_bitget_ws_order.py` 已于 2026-10-07 删除（可从 `archive/pre-legacy-runtime-retirement` 取回），且它只测到登录，挂撤计时 / 拒单 / 真成交都要新写（feature worktree）。③ 现有 Bitget 白名单 IP 是 test2 的 EIP 35.75.175.46——若新 key 绑它，探针只能在 test2 实盘 box 上跑，需单独授权；或把开发机出口 IP 加白名单。
 
 - [x] **用户已确认（2026-11-06，BG 会话）**：UTA 已开通；key 白名单 = test2 EIP 35.75.175.46 ⇒ 探针在 test2 上跑；已当面授权 Step 0 探针真单（≤ 1 张挂撤循环 200 次 + 1 张穿价 post_only + 1 次 0.001 BTC 真成交和 IOC 平仓）
-- [ ] API key 值填入 test2 `.env.test2` 的 `BITGET_ACCOUNT_003_{API_KEY,SECRET,PASSPHRASE}`（LABEL=bg-mm-calib；占位已加，值待用户填）
+- [x] key 已就位并完成 Step 0（test2 上的 env 用后已删除）
+- [ ] Run A 前：切 **单向持仓**（或引擎显式处理 hedge_mode）；订 fill 频道拿 tradeId / 成交时刻；减仓 IOC 放对手 touch + 容差
 - [ ] Step 1 载体：test2 新增一个专跑标定的 maker 策略单元（BG 会话出方案 → 用户确认 → 开工）
 - [ ] qflow 侧：Bitget UTA v3 WS 下单 / 撤单真机探针（Step 0）
 - [ ] qflow 侧：mm 模式接 Bitget 账户（HTX `htx-mm-1` 的 mm 配置迁一份，venue 换 bitget_uta，参数按 §2）
