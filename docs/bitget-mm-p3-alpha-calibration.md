@@ -26,7 +26,7 @@
 
 | 项 | 值 | 备注 |
 |---|---|---|
-| 账户 | UTA，API key 只开交易权限、关提现、IP 白名单 | 下单 / 撤单走 v3 WS |
+| 账户 | UTA，API key 只开交易权限、关提现、IP 白名单（test2 EIP） | 下单 / 撤单走 **Lo-La 高速线** v3 WS（`vip-ws-uta-pri-a.bitget.com` / `vip-api-uta-a.bitget.com`） |
 | 合约 | BTCUSDT 单合约 | 队列最厚、数据最全、与 P1 可比；ETH/SOL 等 BTC 出结果 |
 | lot | 0.001 BTC（10 张，sizeMultiplier 0.0001） | 名义 ≈ 100 USDT；单笔风险 15 bp ≈ 0.15 USDT |
 | price_mode | touch | |
@@ -64,7 +64,18 @@ qflow 的 `venue/bitget/uta_v3/*` 是照文档写的、未真机测过。单独�
 | 费率验证 | maker 0.001 BTC @76093.5 fee = −0.003804675 USDT = **−0.5 bp**；taker 平仓 0.003 @76099.4 fee = +0.03424473 = **+1.5 bp** | 费率真值确认 |
 | 意外 | 离 touch 50 tick（5 USD）的循环单 3/100 在撤单到达前被扫成交；首笔平仓 IOC 只放 bid−2 USD 未成交（`ioc_not_full_cancel`），裸露 0.003 BTC 约 15 min 后才平掉 | ① Bitget BTC 几秒能动 5 USD，队列与波动比 HTX「活」；② **减仓 IOC 必须放对手 touch 并带容差**（策略文档 §4.5），探针修复后再跑 |
 
-下一步（BG 会话）：修探针（循环中检测到成交立即平；IOC 价位放宽）→ 补 UTC 13~15 的 100 次。
+**Lo-La 高速线补测（2026-11-06 UTC 11:22，test2 IP 已开通，100 次）**：WS `wss://vip-ws-uta-pri-a.bitget.com/v3/ws/private`、REST `https://vip-api-uta-a.bitget.com`，东京 AWS ELB 直连不经 CloudFront，TCP 往返 ≈ 1 ms。
+
+| 项 | Lo-La | 公共入口 |
+|---|---|---|
+| 下单 → ack | p50 2.93 / p90 3.25 / p99 3.57 / max 23.4 ms | p50 11.4 / p99 52.9 |
+| 撤单 → ack | p50 2.74 / p99 3.23 | p50 10.1 / p99 237 |
+| 撤单 → 推送终态（n=92） | **p50 3.53 / p90 3.88 / p99 8.26** | p50 14.2 / p99 462 |
+| 交易所内部处理（下单 / 撤单） | 2.02 / 1.81 | 3.6 / 3.3 |
+
+⇒ **Run A 直接用 Lo-La 线**（venue 端点改为上面两个地址）；C1 按 ≤ 20 ms 档设计，且 p99 也在 10 ms 内，尾部狙击窗口基本关死。本轮 8/100 张离 touch 5 USD 的单在撤单前被成交（午后波动大于上午），均已立即 IOC 平掉、仓位 0。
+
+下一步（BG 会话）：用 Lo-La 线补 UTC 13~15 的 100 次。
 
 ### Step 1 · Run A（C1 开），直到 at-touch 成交 ≥ 300 笔
 

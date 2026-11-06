@@ -176,7 +176,7 @@ fv_lead  = mid_bg(t_h) + (mp_bn(now) − mp_bn(t_h))          # t_h = Bitget 最
 | C5 本档缩水（可选） | 1 s 内本档量缩 > 70% | 撤，重挂 | R2-d B，T1-2 |
 | ⛔ 不做 | 同价位空转重挂、按队列进度提前重挂、时段开关、hazard 停挂 | | R2-c、R2-d D、R5-b |
 
-**Step 0 实测（2026-11-06，test2 → Bitget UTA v3 WS）：撤单 p50 14.2 / p90 41 / p99 462 ms**，在质量模式口径内但尾部近半秒。撤单延迟目标：**≤ 20 ms 为「质量模式」，≤ 50 ms 为可用线，> 100 ms 时 C1 几乎无效**（R2-c §8：L=20 每笔 −0.80 / L=50 −1.03 / L=100 −1.12）。Bitget 跟 BN 比 HTX 紧，门限应更严。账户已定 **UTA**，走 v3 WS 下单 / 撤单（qflow `venue/bitget/uta_v3/*` 据文档实现、**未真机实测**，P3 第一件事就是测它）。
+**Step 0 实测（2026-11-06，test2 → Bitget UTA v3 WS）**：公共入口撤单 p50 14.2 / p99 462 ms；**Lo-La 高速线（`vip-ws-uta-pri-a.bitget.com`，东京 ELB 直连）撤单 → 终态 p50 3.5 / p99 8.3 ms**，Run A 用 Lo-La。撤单延迟目标：**≤ 20 ms 为「质量模式」，≤ 50 ms 为可用线，> 100 ms 时 C1 几乎无效**（R2-c §8：L=20 每笔 −0.80 / L=50 −1.03 / L=100 −1.12）。Bitget 跟 BN 比 HTX 紧，门限应更严。账户已定 **UTA**，走 v3 WS 下单 / 撤单（qflow `venue/bitget/uta_v3/*` 据文档实现、**未真机实测**，P3 第一件事就是测它）。
 
 ### 4.5 库存与出场（比 HTX 更紧）
 
@@ -246,7 +246,7 @@ fv_lead  = mid_bg(t_h) + (mp_bn(now) − mp_bn(t_h))          # t_h = Bitget 最
 | **P0 补采集**（立即） | collector1 加 `bitget_futures_sbe` SOLUSDT（depth 双连接 + trade + depth_l2） | — | 14 天后 SOL 可回测；≈ 1 GB/天 |
 | **P1 BTC/ETH 定数**（已派 subagent，2026-11-06） | 用 qflow-research 的 mm 模拟器（R2-c 链 + clamp）在 Bitget BTC 09-27 ~ 10-31 上跑 Tier 0 形态，α ∈ {0.25, 0.5, 0.75}；ETH 同跑；对比 R6-b 的 −0.2~−0.46 与 HTX 借口径的 −0.8~−1.2，**定下 Bitget touch 成交的 mo30**；按本文费率折净值 | 已有 | 过 §5.2 门 1 则进 P3；不过则等 SOL 数据与 UTA 延迟实测 |
 | **P2 SOL 回测** | 同模拟器跑 SOL；额外报 queue 换手时间、成交率 | P0 满 14 天 | 与 BTC/ETH 比每笔净值与止损频率 |
-| **P3 实盘标定**（方案见 [bitget-mm-p3-alpha-calibration.md](bitget-mm-p3-alpha-calibration.md)；**Step 0 已过门 2026-11-06：撤单 p50 14.2 / p99 462 ms，费率 −0.5 / +1.5 实测确认；账户为 hedge_mode 需切单向；order 推送无 tradeId**） | Step 0 UTA v3 WS 真机探针（撤单延迟）→ Run A：BTC、lot 0.001、Tier 0 形态、C1 开、一套配置不动，直到 at-touch 成交 ≥ 300 笔（约 2~4 天）→ 封口后按 R3-a 流程标 α、分桶成交率、Δt、净值 | — | 过门 2 |
+| **P3 实盘标定**（方案见 [bitget-mm-p3-alpha-calibration.md](bitget-mm-p3-alpha-calibration.md)；**Step 0 已过门 2026-11-06：Lo-La 线撤单 p50 3.5 / p99 8.3 ms（公共入口 14.2 / 462），费率 −0.5 / +1.5 实测确认；账户为 hedge_mode 需切单向；order 推送无 tradeId**） | Step 0 UTA v3 WS 真机探针（撤单延迟）→ Run A：BTC、lot 0.001、Tier 0 形态、C1 开、一套配置不动，直到 at-touch 成交 ≥ 300 笔（约 2~4 天）→ 封口后按 R3-a 流程标 α、分桶成交率、Δt、净值 | — | 过门 2 |
 | **P4 小额运行** | 过门的 1~3 个合约、Tier 0 形态；每 UTC 日封口复盘 | — | 过门 3 |
 | **P5 v2** | ① Tier 1 逐项 A/B（本档缩水、fv_slow、按 qa 调量）；② 对冲腿（web taker 0.7 / Binance maker）；③ 多合约账户层风控 | P4 journal | 每项单独 LAND/DROP |
 
