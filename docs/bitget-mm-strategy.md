@@ -346,7 +346,8 @@ HTX 的 journal 已有 `extra.maker.{queue_ahead, spread_ticks, inside, price, a
 - [x] §9.3：`ticker`→mark 状态流 **已上线**（2026-11-06 19:06 UTC+8，PR #1613，develop `a09346b3d`，collector-b）。实测 9.25 帧/s；落盘 `normalized/bitget_futures/btcusdt/mark/<UTC 日>/part-*.parquet`（≈ 0.13 GB/天），S3 次日归档。`price`=markPrice，`exchange_ts` **毫秒**，payload 键 `index_price` / `funding_rate` / `next_funding_ts`（ms）与 BN mark 对齐，另有 `last_price` / `bid_price` / `ask_price` / `bid_size` / `ask_size` / `holding_amount`。未纳入：liquidation、ETH/SOL、books 增量
 - [x] P1：7 天中间结果已回填 §1.2；35 天主回测搁置（box 关机，用户选择直接走 P3）
 - [x] P3 Step 0：过门（撤单 p50 14.2 ms）；UTC 13~15 的 100 次待补
-- [ ] P3 Step 1：qflow 侧把 mm 模式接 Bitget UTA 账户，按 p3 文档 §2 配置跑 Run A
+- [ ] P3 Step 1：qflow 侧把 mm 模式接 Bitget UTA 账户，按 p3 文档 §2 配置跑 Run A（**BTC + ETH 两个独立实例并行**，用户 2026-11-06 指示全部同步推进）
+- [ ] 回测（2026-11-06 用户授权开 research box，已派 subagent）：R1 = 35 天 BTC/ETH Tier 0 主回测（D3 / D4 / P1 × α × L∈{5,20,50}）+ 库存链 sl 15/600 与 30/1800；R2 = E3 止损事件路径；R3 = E1 前置撤单；R4 = E4 预挂 vs 追挂；R5 = E2-lite 成交条件分类（BN OI 仅 10-28 起）。round：`qflow-research/docs/strategy-research/2026-11-06-bitget-mm-p1-35d-and-e1-e5/`
 
 ## 11. 评审意见处理（[bitget-mm-strategy-review.md](bitget-mm-strategy-review.md)，2026-11-06）
 
