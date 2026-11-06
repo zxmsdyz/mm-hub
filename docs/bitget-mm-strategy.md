@@ -347,7 +347,7 @@ HTX 的 journal 已有 `extra.maker.{queue_ahead, spread_ticks, inside, price, a
 - [x] P1：7 天中间结果已回填 §1.2；35 天主回测搁置（box 关机，用户选择直接走 P3）
 - [x] P3 Step 0：**全部完成**。Lo-La 撤单 → 终态 p50 ≈ 3 ms、p99 < 4 ms（UTC 13~15 与其他时段无差别，300 次）；公共入口 14.2 / 462
 - [ ] P3 Step 1：qflow 侧把 mm 模式接 Bitget UTA 账户，按 p3 文档 §2 配置跑 Run A（**BTC + ETH 两个独立实例并行**，用户 2026-11-06 指示全部同步推进）
-- [ ] 回测（2026-11-06 用户授权开 research box，已派 subagent）：R1 = 35 天 BTC/ETH Tier 0 主回测（D3 / D4 / P1 × α × L∈{5,20,50}）+ 库存链 sl 15/600 与 30/1800；R2 = E3 止损事件路径；R3 = E1 前置撤单；R4 = E4 预挂 vs 追挂；R5 = E2-lite 成交条件分类（BN OI 仅 10-28 起）。**ETH 35 天**：盘只余 18 G，用户 2026-11-06 决定删 box 上 BN depth_diff 缓存（28 G，S3 有归档）腾盘后接跑（含 E1 / E3）。box 22:31 开机，预计 BTC 全部约次日 06:00 完成、ETH 其后。round：`qflow-research/docs/strategy-research/2026-11-06-bitget-mm-p1-35d-and-e1-e5/`
+- [ ] 回测（2026-11-06 用户授权开 research box，已派 subagent）：R1 = 35 天 BTC/ETH Tier 0 主回测（D3 / D4 / P1 × α × L∈{5,20,50}）+ 库存链 sl 15/600 与 30/1800；R2 = E3 止损事件路径；R3 = E1 前置撤单；R4 = E4 预挂 vs 追挂；R5 = E2-lite 成交条件分类（BN OI 仅 10-28 起）。**ETH 35 天**：盘只余 18 G，用户 2026-11-06 决定删 box 上 BN depth_diff 缓存（28 G，S3 有归档）腾盘后接跑（含 E1 / E3）。box 22:31 开机，已删缓存（28 G → 38 G 可用，commands.md §6）；ETH 走 7 天一批用完即删，排在 BTC 之后自动起，预计 BTC 11-07 06:00、ETH 11-07 14:00 前后完成。⚠ ETH 价位长表价格 ×10 以适配引擎写死的 tick 比例（bp 指标不受影响，名义额在报告侧除回），qa 桶阈值沿用 BTC 只作相对比较。round：`qflow-research/docs/strategy-research/2026-11-06-bitget-mm-p1-35d-and-e1-e5/`
 
 ## 11. 评审意见处理（[bitget-mm-strategy-review.md](bitget-mm-strategy-review.md)，2026-11-06）
 
