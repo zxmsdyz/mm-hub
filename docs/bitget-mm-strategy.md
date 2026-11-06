@@ -316,7 +316,7 @@ HTX 的 journal 已有 `extra.maker.{queue_ahead, spread_ticks, inside, price, a
 
 | 流 | 用途 | 现状 |
 |---|---|---|
-| Bitget mark / index price（WS `ticker`） | HALT 规则「mark 与 last 背离 > 20 bp」；标记价是强平依据 | **开发中**（2026-11-06，`bitget_futures` venue `mark` 流，见 §10） |
+| Bitget mark / index price（WS `ticker`） | HALT 规则「mark 与 last 背离 > 20 bp」；标记价是强平依据 | ✅ **已上线**（2026-11-06 19:06，`bitget_futures` venue `mark` 流，BTC，见 §10） |
 | Bitget 资金费率 + 下次结算时间 | T1-5 结算前倾斜；结算前 60 s HALT | 同上，payload `funding_rate` / `next_funding_ts` |
 | Bitget 强平流 | 事件标注，不进因子 | 公共频道存在（ack 成功）但稀疏，本次未纳入 |
 | BN `@markPrice`、`@forceOrder` | hazard 复核（已判 DROP，低优先） | ✅ 已部署在采（collector-a，2026-10-28 05:16 UTC 起，含 oi） |
@@ -339,7 +339,7 @@ HTX 的 journal 已有 `extra.maker.{queue_ahead, spread_ticks, inside, price, a
 ## 10. 待办
 
 - [x] P0：Bitget SOLUSDT 采集已上线（2026-11-06，PR #1607）
-- [ ] §9.3：`ticker`→mark 状态流开发中（用户已确认 B，2026-11-06；OpenSpec `add-bitget-json-mark-state-collection`，预计 3~5 h 进 develop，部署另需授权）。落盘：`normalized/bitget_futures/btcusdt/mark/`，`price`=markPrice、`exchange_ts`=data.ts，payload 键 `index_price` / `funding_rate` / `next_funding_ts`（ms）与 BN mark 对齐，另有 `last_price` / `bid_price` / `ask_price` / `bid_size` / `ask_size` / `holding_amount`；≈ 9.2 帧/s。liquidation 未纳入
+- [x] §9.3：`ticker`→mark 状态流 **已上线**（2026-11-06 19:06 UTC+8，PR #1613，develop `a09346b3d`，collector-b）。实测 9.25 帧/s；落盘 `normalized/bitget_futures/btcusdt/mark/<UTC 日>/part-*.parquet`（≈ 0.13 GB/天），S3 次日归档。`price`=markPrice，`exchange_ts` **毫秒**，payload 键 `index_price` / `funding_rate` / `next_funding_ts`（ms）与 BN mark 对齐，另有 `last_price` / `bid_price` / `ask_price` / `bid_size` / `ask_size` / `holding_amount`。未纳入：liquidation、ETH/SOL、books 增量
 - [x] P1：7 天中间结果已回填 §1.2；35 天主回测搁置（box 关机，用户选择直接走 P3）
 - [x] P3 Step 0：过门（撤单 p50 14.2 ms）；UTC 13~15 的 100 次待补
 - [ ] P3 Step 1：qflow 侧把 mm 模式接 Bitget UTA 账户，按 p3 文档 §2 配置跑 Run A
