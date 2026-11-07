@@ -240,7 +240,7 @@ fv_lead  = mid_bg(t_h) + (mp_bn(now) − mp_bn(t_h))          # t_h = Bitget 最
 | `Q_max` | 1 lot | §4.5 |
 | `max_lot_age_s` | 600 | §4.5 |
 | `sl_bp` | 15 | §4.5 |
-| `stale_bn_ms` / `stale_bg_ms` | 300 / 1000 | 设计文档 §3.1 |
+| `stale_bn_ms` / `stale_bg_ms` | 300 / 1000（**Run A 实际为 mm 单阈值 `max_quote_age_ms` 3000**，无分档；G3 qa>0 门 Run A 未启用） | 设计文档 §3.1；BG 2026-11-07 |
 | `lot`（BTC） | 0.001 | 标定期 |
 | `lot`（宽 tick 品种） | 按 50 ~ 100 USDT 名义 | 标定期 |
 
