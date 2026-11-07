@@ -121,7 +121,7 @@ Step 1 状态（2026-11-06 晚）：BG 会话只读摸底 Rust trader mm 模式�
 - [x] **用户已确认（2026-11-06，BG 会话）**：UTA 已开通；key 白名单 = test2 EIP 35.75.175.46 ⇒ 探针在 test2 上跑；已当面授权 Step 0 探针真单（≤ 1 张挂撤循环 200 次 + 1 张穿价 post_only + 1 次 0.001 BTC 真成交和 IOC 平仓）
 - [x] key 已就位并完成 Step 0（test2 上的 env 用后已删除）
 - [x] **用户已确认（2026-11-07）**：切单向持仓（用户本人在 Bitget 操作，须无仓无挂单时切）；BTC + ETH 同上，test2 trader-003 跑 BTC（lot 0.001）、trader-005 跑 ETH（lot 0.01）；减仓沿用 mm 现有**市价 taker**（1.5 bp；标定 lot 下 L1 厚度远超单笔，不会滑多档，接受此偏离）
-- [ ] Step 1 实现中（BG 会话）：Bitget 端点可配（默认 Lo-La）、BTC/ETH 合约规格表、mm 支持 Bitget 单向持仓下单、订 fill 频道解析 cancelReason / fee、journal 补四组字段。OpenSpec：qflow `openspec/changes/add-bitget-mm-calibration-units/`（预计）。实现 + 审核 + CI 约 5~7 h，部署前用户另行授权；Run A 启动时刻待确认
+- [ ] Step 1 实现中（BG 会话）：OpenSpec **`qflow/openspec/changes/add-bitget-mm-calibration-units/`**（分支 `feature/bitget-mm-calibration-units`，worktree `~/workspace/qflow-bg-mm`）。**2026-11-07 15:40 本会话核对**：design §5 Tier 0 参数（touch / 安静 1 s / edge 0 / fv_slow 关 / BN 撤单 300 ms·1 tick / 30 s / 1 lot / 600 s / 15 bp / hazard 关 / lola_fast）与 journal·venue·runtime 三份 spec 全部对上 §2 与策略文档 §9.2；端点白名单 4 档；合约规格 BTC tick 0.1 步长 0.0001、ETH tick 0.01 步长 0.01；fill 行含 execId / tradeScope / feeDetail / createdTime，部分成交逐笔；止损行带滑点。四点待其确认：G3（qa>0 才挂）是否启用并写明；stale 阈值实际取值；C2/C3/C4 沿用 HTX 现行规则；taker 减仓行加 q / 批次龄 / 浮亏。**Run A 最早 UTC+8 11-07 23:00 ~ 11-08 02:00**（前提：用户今天切好单向持仓、one_way 下单格式探针一次通过）
 - [ ] bg-maker 1.6 ms 核对：等用户提供其 UID 与应答帧 receiveTime / pushTime（我方交易所内部处理已 ≈ 2.0 ms，差距不在客户端）
 - [ ] Step 1 载体：test2 新增一个专跑标定的 maker 策略单元（BG 会话出方案 → 用户确认 → 开工）
 - [ ] qflow 侧：Bitget UTA v3 WS 下单 / 撤单真机探针（Step 0）
