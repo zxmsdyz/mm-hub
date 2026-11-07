@@ -89,6 +89,19 @@ Step 1 状态（2026-11-06 晚）：BG 会话只读摸底 Rust trader mm 模式�
 
 只有 Step 0 撤单 p50 > 50 ms、或 Run A 的被狙击占比 ≥ 回测 +10 pp 时才跑，用来量化 C1 在 Bitget 上到底砍掉多少毒性。
 
+### Step 2.5 · Run A journal 字段（qflow `feature/bitget-mm-calibration-units` @ 51538efe9，2026-11-07）
+
+分析脚本按此写：
+
+| 行 | 字段 |
+|---|---|
+| `maker_order_end.maker`（子单终态） | 既有 `queue_ahead / price / attempt_seq / reprice_reason / spread_ticks`；新增 `place_decided_ms`、`place_bn_{bid,ask,bid_qty,ask_qty,exchange_ts_ms}`、`cancel_decided_ms`、`cancel_bn_{…}` 同组、`place_exchange_ack_ms`、`cancel_exchange_ack_ms`、`reject_code` |
+| `mm_fill`（逐笔成交事件） | `exec_id / price / qty_base / side / trade_scope(maker\|taker) / fee / fee_coin / exchange_ts_ms(execTime) / local_recv_ms`；部分成交逐笔 |
+| `trigger`（`pair_purpose=mm_reduce`，taker 减仓触发） | `mm_reduce_q_base / mm_reduce_lot_age_ms / mm_reduce_float_pnl_bp / mm_reduce_touch_{bid,ask}` |
+| `mm_reduce_fill` | `mm_reduce_fill_vwap / mm_reduce_slippage_bp / mm_reduce_complete` |
+
+实现要点：单向持仓净额按 cid + 累计量结算（与 HTX 同一 reducer，真实推送帧测过先买后卖 / 先卖后买净仓归零）；test2-003 / 005 配置加载测试过。状态：独立审核中 → PR + CI → 合 develop → 用户授权部署。
+
 ### Step 3 · 分析（等 collector 封口 1 天后）
 
 按 R3-a 流程，产出下列表（round 目录放 qflow-research，命名 `2026-11-xx-bitget-mm-p3-live-alpha`）：
