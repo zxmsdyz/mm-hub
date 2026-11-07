@@ -113,6 +113,11 @@ Step 1 状态（2026-11-06 晚）：BG 会话只读摸底 Rust trader mm 模式�
 | 前 4 min | 字段全落盘（place_/cancel_ 两组 BN L1 快照、*_decided_ms、*_exchange_receive_us / *_exchange_push_us 微秒原值、queue_ahead、venue_cancel_reason；mm_fill 带 exec_id / fee，BTC maker fee −0.00379 ≈ −0.5 bp；mm_bn_cancel、maker_markout 在写）。BTC 一买一卖后回到空仓（单向净额实盘成立）；ETH 1 min 内 3 笔成交，节奏明显快于 BTC。无 429 / 30006 / 30007、无 halt |
 | 分析注意 | ① 同订单多笔部分成交的 `mm_fill` 在看板 DB 被 UNIQUE 去重 ⇒ **直接读 JSONL**；② fee 只取 feeDetail[0]；③ `history_result.matching_rows=0` 是查单口径（订单号 vs cid），非故障 |
 
+**Run A 事件记录**：
+- UTC 11-07 ~16:58–17:06 **受控暂停一次**（trader 修复 PR #1627：Bitget 撤单后的兜底查单原开 60 s 确认轮，重挂又计额度，第二子单被卡 1–2 min 禁开仓并报 `private_round_abandoned_stalled / stuck_intent`；改为与 HTX 同口径不开轮）。配置一字未改。暂停时 BTC 空 10 张以 taker 平掉（**非策略 taker 平仓**，journal 可查）。**分析剔除 16:58–17:06 窗口与该笔 taker 平仓**。部署后 15 min 两单元 stalled / stuck 均 0。
+- 首份快照（11-07 启动后 ~40 min）：BTC 子单 186 / maker 成交 38（成交率 20%）/ mo30 **−0.26**（n=37）；ETH 421 / 106（25%）/ mo30 **−0.83**（n=66）；两单元 taker 0、halt 0、429 0。成交率远高于 HTX 实盘 1.5%，与回测同量级；ETH 实盘 markout 比回测差 0.46，待日汇总。
+- 巡查：BG 会话定时任务每小时 :17 查异常、每日 UTC+8 08:11 发前一 UTC 日汇总（用户已批）。
+
 Run A 结束条件不变：at-touch 成交 ≥ 300 笔（每单元），覆盖 ≥ 2 个 UTC 13~15 时段与 1 个周末（11-08/09 恰为周末）；封口后 1 天做 Step 3。
 
 ### Step 3 · 分析（等 collector 封口 1 天后）
