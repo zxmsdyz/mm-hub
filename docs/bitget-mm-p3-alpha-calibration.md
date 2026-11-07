@@ -120,7 +120,9 @@ Step 1 状态（2026-11-06 晚）：BG 会话只读摸底 Rust trader mm 模式�
 
 - [x] **用户已确认（2026-11-06，BG 会话）**：UTA 已开通；key 白名单 = test2 EIP 35.75.175.46 ⇒ 探针在 test2 上跑；已当面授权 Step 0 探针真单（≤ 1 张挂撤循环 200 次 + 1 张穿价 post_only + 1 次 0.001 BTC 真成交和 IOC 平仓）
 - [x] key 已就位并完成 Step 0（test2 上的 env 用后已删除）
-- [ ] Run A 前：切 **单向持仓**（或引擎显式处理 hedge_mode）；订 fill 频道拿 tradeId / 成交时刻；减仓 IOC 放对手 touch + 容差
+- [x] **用户已确认（2026-11-07）**：切单向持仓（用户本人在 Bitget 操作，须无仓无挂单时切）；BTC + ETH 同上，test2 trader-003 跑 BTC（lot 0.001）、trader-005 跑 ETH（lot 0.01）；减仓沿用 mm 现有**市价 taker**（1.5 bp；标定 lot 下 L1 厚度远超单笔，不会滑多档，接受此偏离）
+- [ ] Step 1 实现中（BG 会话）：Bitget 端点可配（默认 Lo-La）、BTC/ETH 合约规格表、mm 支持 Bitget 单向持仓下单、订 fill 频道解析 cancelReason / fee、journal 补四组字段。OpenSpec：qflow `openspec/changes/add-bitget-mm-calibration-units/`（预计）。实现 + 审核 + CI 约 5~7 h，部署前用户另行授权；Run A 启动时刻待确认
+- [ ] bg-maker 1.6 ms 核对：等用户提供其 UID 与应答帧 receiveTime / pushTime（我方交易所内部处理已 ≈ 2.0 ms，差距不在客户端）
 - [ ] Step 1 载体：test2 新增一个专跑标定的 maker 策略单元（BG 会话出方案 → 用户确认 → 开工）
 - [ ] qflow 侧：Bitget UTA v3 WS 下单 / 撤单真机探针（Step 0）
 - [ ] qflow 侧：mm 模式接 Bitget 账户（HTX `htx-mm-1` 的 mm 配置迁一份，venue 换 bitget_uta，参数按 §2）
