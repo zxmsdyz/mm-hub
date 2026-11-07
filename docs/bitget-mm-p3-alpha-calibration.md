@@ -102,6 +102,19 @@ Step 1 状态（2026-11-06 晚）：BG 会话只读摸底 Rust trader mm 模式�
 
 实现要点：单向持仓净额按 cid + 累计量结算（与 HTX 同一 reducer，真实推送帧测过先买后卖 / 先卖后买净仓归零）；test2-003 / 005 配置加载测试过。状态：独立审核中 → PR + CI → 合 develop → 用户授权部署。
 
+### Run A 已启动（2026-11-07）
+
+| 项 | 值 |
+|---|---|
+| 启动 | trader-003 BTCUSDT **15:30:28 UTC**（UTC+8 23:30）；trader-005 ETHUSDT 15:31:58 UTC |
+| 代码 | qflow develop `c89e5ed0e`，PR zxmsdyz/qflow#1622（用户授权部署）；独立审核 2 轮通过，1 个 P1（ack 缺 receiveTime）已修 |
+| 线路 / 账户 | Lo-La（vip-ws-uta-pri-a / vip-api-uta-a），单向持仓，两单元绑物理核 0 |
+| journal（test2） | `/opt/qflow/data/trading/_hedge_unit/bg-mm-btc/legs/bitget_account_003/versions/bg-mm-calib-btc-v1/journal.jsonl`；ETH `bg-mm-eth/legs/bitget_account_005/versions/bg-mm-calib-eth-v1/journal.jsonl` |
+| 前 4 min | 字段全落盘（place_/cancel_ 两组 BN L1 快照、*_decided_ms、*_exchange_receive_us / *_exchange_push_us 微秒原值、queue_ahead、venue_cancel_reason；mm_fill 带 exec_id / fee，BTC maker fee −0.00379 ≈ −0.5 bp；mm_bn_cancel、maker_markout 在写）。BTC 一买一卖后回到空仓（单向净额实盘成立）；ETH 1 min 内 3 笔成交，节奏明显快于 BTC。无 429 / 30006 / 30007、无 halt |
+| 分析注意 | ① 同订单多笔部分成交的 `mm_fill` 在看板 DB 被 UNIQUE 去重 ⇒ **直接读 JSONL**；② fee 只取 feeDetail[0]；③ `history_result.matching_rows=0` 是查单口径（订单号 vs cid），非故障 |
+
+Run A 结束条件不变：at-touch 成交 ≥ 300 笔（每单元），覆盖 ≥ 2 个 UTC 13~15 时段与 1 个周末（11-08/09 恰为周末）；封口后 1 天做 Step 3。
+
 ### Step 3 · 分析（等 collector 封口 1 天后）
 
 按 R3-a 流程，产出下列表（round 目录放 qflow-research，命名 `2026-11-xx-bitget-mm-p3-live-alpha`）：
