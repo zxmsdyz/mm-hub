@@ -504,5 +504,10 @@ Run A 首日的结论是 BN 事件撤单在 Bitget 上来不及（Bitget 成交�
 BTC 35 天（09-27~10-31，交易所钟对齐、α=0、严格穿过）S1 深挂 / 频控 20/s / 去基差锚 / S3 梯子共 768 格**全负**，最好 −0.70 bp/回合，与不看 BN 的安慰剂只差 0.02~0.04 bp；成交后 30 s 回归为负，**BN 向偏离方向跟进 +0.8~1.3 bp**——扫到深挂单的 Bitget 本地冲击是知情流，不是可回归的流动性冲击。延迟 4→50 ms 不改符号。round：qflow-research `research/bitget-mm-shock-reversion-pilot`、`-35d`。
 **留存一条对 touch 线的候选**：Run A touch 成交按「成交前 300 ms Bitget 冲击方向主动量 σ」分桶，mo30 单调变差（BTC σ≤0 −0.41 → σ>3 −1.78，n=27）——Bitget 本地、成交前可见，可作撤单 / 挂单门。**已测，DROP（§12.4.3b）**。原立项：BTC 35 天修后引擎上测 W ∈ {300 ms, 1 s} × {冲击侧 zB/zS, zK} × k ∈ {1,2,3} 共 12 格（挂单门 + 撤单门，误触发成本由链计入），排在 35 天基线之后，同一 round `2026-11-08-bitget-mm-engine-fix-and-d2` findings ④。
 
+### 12.4.5 收尾状态（2026-11-08）
+- 另一会话的 alpha + 轻库存惩罚 + 按行情拆账（`bitget-mm-alpha-inventory-regime.md`）只跑 7 天，**用户叫停、判 DROP**；迭代总账见 [bitget-mm-iteration-log.md](bitget-mm-iteration-log.md)。
+- 留存事实：**Bitget SBE trade 条目第 33 字节 = isRPI**（SOL 上与 REST 逐笔 1,898 / 1,898 一致，BTC/ETH 恒 0；采集器目前只解析前 33 字节）。SOL 上被 API 吃掉的 touch 成交 mo30 −0.76、被散户（RPI）吃掉 +0.32——对手方类型是一手信息，若再开 SOL 线可从这里入手。
+- research box 本线已无作业；当前仅另一会话的 `2026-11-08-zscore-volume-split-sigma-factors` 在跑，由其结束后关机。
+
 ### 12.5 原判定依据（保留）
 分析 round `2026-11-08-bitget-mm-runA-live-vs-sim` Q7：对每笔实盘成交算 τ = Bitget 成交时刻 − BN 不利事件时刻（交易所时间戳对交易所时间戳），给全链路延迟 L ∈ {1, 1.5, 2, 2.3, 3, 4, 5, 8} ms 各能避开多少被扫成交、避开后每笔净多少。**τ ≤ 0 的那部分（Bitget 先动）任何延迟都避不开**——这个占比决定 2.3 ms 的上限收益。两单元继续跑作测量床，配置不改。
