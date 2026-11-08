@@ -254,4 +254,4 @@ H6 用现成 Run A 数据，**最便宜、最先做**。
 
 - [x] Stage 0：round `2026-11-08-bitget-mm-shock-reversion-pilot`（§7.1）
 - [x] Stage 1：round `2026-11-08-bitget-mm-shock-reversion-35d`（§7.2）→ **DROP**（§7.3），不写 qflow 实现提案
-- [ ] 待验证：Bitget 冲击方向主动量 σ 作为 touch 做市撤单 / 不挂门的增量（等引擎修复 round 的 35 天新基线）
+- [x] ~~待验证：Bitget 冲击方向主动量 σ 作为 touch 做市撤单 / 不挂门的增量~~ → **DROP**（另一会话 2026-11-08，round `2026-11-08-bitget-mm-engine-fix-and-d2`：BTC 35 天 12 格挡掉的成交不更毒、k=1 剩余 mo30 反而更差 −0.91~−0.92；Run A n=27 的单调性是小样本假象）
