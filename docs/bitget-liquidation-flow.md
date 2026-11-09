@@ -25,4 +25,6 @@ Bitget `liquidation` 频道（本所强平直接打 Bitget 盘口）；BN ETH / 
 - [x] 第一步：round `2026-11-09-bitget-liquidation-flow`（commit e2c06d8ab）
 - [x] 第二步（样本内描述，预登记 `prereg_gliq.md` 39bff1104）：12 天 lot 0.01——P3 −46.4 / 回撤 55；P3 + 熔断 60 +12.5 / 18.1；P3 + G_liq +65.2 / 11.5；**P3 + G_liq + 熔断 60 +75.5 / 7.1、价格止损 38 → 9、11-08 由 −18.1 → +5.4**；被门挡掉的回合反事实 −100（28 次止损）；关 OI 条件后接多转负；安慰剂 B 同门同熔断 −54.6。⚠ 阈值与条件看过同段数据后选定、16 格挑格，只作假设。
 - [x] **用户 11-09 批准：G_liq 以影子模式进 qflow 实现**（只算只记 journal，不拦单），Run B 期间前向验证；已发实现方
-- [ ] 补采：Bitget `liquidation` 频道、BN ETH / SOL forceOrder（用户安排 collector 会话）
+- [x] 2026-11-09 核实（collector1 11-08 `mark` 流 + 实时 WS 探针 90 s）：Bitget `liquidation` 频道订阅成功但**零帧**，S3 无该流 ⇒ 不可依赖；Bitget ticker 9.2 帧/s，但 `holdingAmount`（OI）值**每 ≈ 10 s 刷新一次**（p90 10~20 s），markPrice 每 ≈ 4 s；5 min ΔOI 门用 10 s 粒度够用。Bitget OI 是本所去杠杆唯一可见信号（11-08 21:45 Bitget −0.56%/5 min vs BN OI 上升；两所 ΔOI5 相关 0.26）
+- [x] 用户批准：影子字段加 `doi5_bg`（Bitget OI，只记不判），两周后另起预登记标定阈值；已发实现方
+- [ ] 补采：BN ETH / SOL forceOrder（用户安排 collector 会话）；Bitget 强平频道因不推数据，暂不采
