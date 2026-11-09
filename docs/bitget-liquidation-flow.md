@@ -23,5 +23,6 @@ Bitget `liquidation` 频道（本所强平直接打 Bitget 盘口）；BN ETH / 
 
 ## 进度
 - [x] 第一步：round `2026-11-09-bitget-liquidation-flow`（commit e2c06d8ab）
-- [ ] 第二步：强平门 G_liq（前 60 s 无同向强平 ∧ ΔOI(5 min) > −0.2%）× 熔断 60 叠加表（样本内描述），门预登记后用于 11-09 起前向验证与 Run B 对表
+- [x] 第二步（样本内描述，预登记 `prereg_gliq.md` 39bff1104）：12 天 lot 0.01——P3 −46.4 / 回撤 55；P3 + 熔断 60 +12.5 / 18.1；P3 + G_liq +65.2 / 11.5；**P3 + G_liq + 熔断 60 +75.5 / 7.1、价格止损 38 → 9、11-08 由 −18.1 → +5.4**；被门挡掉的回合反事实 −100（28 次止损）；关 OI 条件后接多转负；安慰剂 B 同门同熔断 −54.6。⚠ 阈值与条件看过同段数据后选定、16 格挑格，只作假设。
+- [x] **用户 11-09 批准：G_liq 以影子模式进 qflow 实现**（只算只记 journal，不拦单），Run B 期间前向验证；已发实现方
 - [ ] 补采：Bitget `liquidation` 频道、BN ETH / SOL forceOrder（用户安排 collector 会话）
