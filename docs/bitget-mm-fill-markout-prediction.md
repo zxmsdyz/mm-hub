@@ -72,6 +72,16 @@
 | `utc_hour`, `is_weekend`, `min_to_funding` | 时段 |
 | `side`, `q`, `batch_age`, `same_side_fill_streak` | 我方状态 |
 
+### G5 · 衍生品状态（强平 / OI / 标记价；用户 2026-11-09 问，列为**低先验、按数据决定**）
+| 因子 | 定义 | 已有证据与数据约束 |
+|---|---|---|
+| `liq_notional_10s / 60s`，`liq_side` | BN `@forceOrder` 最近 10 / 60 s 强平名义额与方向；Bitget 强平频道若可采同列 | BN 流是**节流快照**（每 symbol ≤ 1 条/s），只能当「有无强平潮」的旗标，不能计量；R6-b G6 四天 ll_skill 全降。强平潮正是「急跌接针」线能赚的 regime，对本线的作用更可能是**该时段别挂**而非定价 |
+| `d_oi_5s / 60s`，`oi_z_1h` | OI 变化与 1 h z 值 | Bitget `mark` 流 11-06 起有 **9 Hz** `holding_amount`（真正可用的高频 OI）；BN OI 只有 REST 5 s。E2-lite 用 BN 5 s ΔOI 单特征 AUC 0.49（仅 4 天），零增量——但那是 5 s 粗口径，9 Hz 的没测过 |
+| `mark_dev`，`index_dev` | Bitget mark − last、index − last（bp） | Bitget `mark` 流同上；mark 是强平依据，mark 与 last 背离大时强平盘在路上。未测 |
+| `funding_rate`，`min_to_funding` | 当期费率、距结算 | 在 G4 已有 min_to_funding；费率水平进这里 |
+
+**数据约束决定了测法**：Bitget 9 Hz mark/OI 只从 11-06 起有，35 天训练窗（09-27~10-31）里**没有**；BN forceOrder / mark / oi 从 10-28 起。所以 G5 只能在 **S0（Run A 11-07 实盘成交，两所状态流齐全）** 和 10-28~10-31 四天上测增量，S1 的 35 天训练先不含 G5。S0 里单独报「加 G5 vs 不加」以及「G5 去掉活跃度后」——强平与 OI 突变本身强相关于活跃度，大概率被对照 ③ 吸收，若如此就不进 S1。
+
 ### 不进特征的
 BN 现货、跨所成交流（OKX/Bybit/Gate）、分钟级 CTA 因子、hazard：R3-s / R2-d / R6-b / R5-b 已证零增量。
 
