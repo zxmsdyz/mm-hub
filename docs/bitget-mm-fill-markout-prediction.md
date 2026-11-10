@@ -126,3 +126,14 @@ BN 现货、跨所成交流（OKX/Bybit/Gate）、分钟级 CTA 因子、hazard�
 | S4 小额实盘 | 过门后 lot 最小、一套配置不动 7 个 UTC 日 | — | 实盘每笔净 |
 
 S0 不过（增量 < 0.05 bp）就停在 S0，不进 box。
+
+## S0 执行记录（2026-11-10 派出）
+
+- 执行机器：logik 本地回测机（局域网 Windows，`local_servers.logik`），代码与结果只放 `D:\jay`，行情只读 `D:\market_data`。
+- 机器上已完成的日期（2026-11-10 实查）：10-18 ~ 11-08，缺 11-05；更早日期还在补拉。只有 BTCUSDT、ETHUSDT，没有 SOL。
+- 时段选择：
+  - 训练：10-29 ~ 11-04，7 天，修复后引擎的模拟成交。从 10-29 起是因为 BN 强平 / OI / mark 在 10-28 才开始有。
+  - 留出：11-06 一天模拟成交。
+  - 实盘样本外：Run A 真实成交，11-07 15:30 UTC 起到 journal 结束。
+- 限制：Bitget mark 流 11-06 才有，训练段的 mark 背离只能用 BN 侧；SOL 的 rpi_share 本步不测。
+- 研究分支：qflow-research `research/bitget-mm-fill-markout-s0`，round `2026-11-10-bitget-mm-fill-markout-s0`。结果回来后补在本节。
