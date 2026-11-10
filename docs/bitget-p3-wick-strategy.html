@@ -119,6 +119,13 @@ footer{color:var(--mute);font-size:13px;margin-top:22px}
     <tr><td>该方向被配置关闭（<code>enable_long</code> / <code>enable_short</code>）</td><td>方向关闭</td></tr>
     <tr><td>开新门关闭：停机、盘口超过 3 秒不更新、公共成交超过 3 秒无数据、资金费结算前 60 秒、当日亏损达到安全阀</td><td><code>gate_closed</code></td></tr>
   </table></div>
+  <h3>两个进场门（2026-11-10 用户决定直接上线，已交实现方，版本 v2 上线后生效）</h3>
+  <div class="tw"><table>
+    <tr><th>门</th><th>规则</th><th>日志里的原因</th></tr>
+    <tr><td>反向触发门</td><td>过去 300 秒内出现过反方向的触发信号（含被丢弃的），则不接</td><td><code>gate_g5</code></td></tr>
+    <tr><td>分钟级深度门</td><td>过去 60 秒内同方向必须出现过“60 秒窗口幅度达到 15 / 20 / 30 bp”的事件，否则不接。三个阈值各自独立跟踪，不带流量门</td><td><code>gate_m15</code></td></tr>
+  </table></div>
+  <p>两个门的作用是挡掉来回抖动里的小波动。在从未看过的 59 天里，回合数约减半，止损类出场从 131 次降到 40 次，净值从 −42.5 变为 +82.7 USDT。规格见 <code>docs/bitget-p3-wick-gates-spec.md</code>。</p>
   <ul>
     <li>流量门的有效参考窗口少于 30 个时不触发。进程启动后约 5 分钟内不会有触发。</li>
     <li>被丢弃的信号同样消耗武装状态，也全部写入日志，供事后分析。</li>
@@ -347,7 +354,7 @@ footer{color:var(--mute);font-size:13px;margin-top:22px}
     <tr><td>7</td><td>熔断的实际贡献</td><td>11-09 熔断跳过的回合若照常进场合计为正。继续跟踪熔断期内被跳过触发的回测结局</td><td>随对回测</td><td><span class="tag a">观察</span></td></tr>
     <tr><td>8</td><td>止盈单被吃速度</td><td>放大数量后是否仍能在到价后几秒内吃完。现在按公共成交反推，5 张里 4 张在 2 秒内，样本太小</td><td>放大后</td><td><span class="tag a">等样本</span></td></tr>
     <tr><td>9</td><td>记账修复验证</td><td>11-10 03:52 UTC 重建后，第一个多层回合的日志净值是否与按成交重算一致</td><td>下次读数</td><td><span class="tag a">待验证</span></td></tr>
-    <tr><td>11</td><td>把两个进场门加进实盘</td><td>反向触发门和分钟级深度门已在 59 天未看过的数据上通过（净 −42.5 变 +82.7，止损 131 次变 40 次）。只接多在样本外为 −108.5，已否决。是否改实盘、先影子还是直接生效，需用户决定后交实现方</td><td>现在</td><td><span class="tag w">需用户拍板</span></td></tr>
+    <tr><td>11</td><td>两个进场门上线（v2）</td><td>用户 11-10 决定直接上线带门的版本，规格已发实现方。上线后先核对离线回放与参考表逐条一致，再按 v2 单独读数：回合约 9 个/天、梯子成交率约 78%、止损类约 0.7 次/天、每回合约 +2.6 bp</td><td>等实现方上线</td><td><span class="tag w">进行中</span></td></tr>
     <tr><td>12</td><td>币安确认条件</td><td>“挂单时币安也已反弹”和“两所价差偏离大”在 44 天两段都有效，属事后观察。用 07-30 至 09-26 加币安盘口验证，在 logik 本地机数据拉齐后跑</td><td>2 到 3 天后</td><td><span class="tag a">待办</span></td></tr>
     <tr><td>13</td><td>纳指同向</td><td>触发前纳指与 BTC 同向动的回合明显更差，但纳指数据 11-09 才开始采，只有一天。攒够两周后验证</td><td>约 11-23</td><td><span class="tag a">等样本</span></td></tr>
     <tr><td>10</td><td>放行前再做一次同日对回测</td><td>逐触发、逐回合对齐。需要开研究机</td><td>任务 1 之前</td><td><span class="tag a">待办</span></td></tr>
