@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P3 接针策略说明</title>
+<style>
+:root{
+  --bg:#f6f7f9; --card:#ffffff; --ink:#1b1f24; --mute:#5b6570; --line:#dfe3e8; --soft:#eef1f4;
+  --accent:#0b6bcb; --good:#16794c; --bad:#b3261e; --warn:#9a6700; --goodbg:#e6f4ec; --badbg:#fbe9e7; --warnbg:#fff4d6; --accentbg:#e5f0fb;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111418; --card:#191d22; --ink:#e6e9ed; --mute:#9aa4af; --line:#2c333b; --soft:#20252b;
+    --accent:#6cb0f5; --good:#5fd09a; --bad:#ff8a80; --warn:#e9c46a; --goodbg:#143325; --badbg:#3a1a18; --warnbg:#3a2f10; --accentbg:#12304d;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111418; --card:#191d22; --ink:#e6e9ed; --mute:#9aa4af; --line:#2c333b; --soft:#20252b;
+  --accent:#6cb0f5; --good:#5fd09a; --bad:#ff8a80; --warn:#e9c46a; --goodbg:#143325; --badbg:#3a1a18; --warnbg:#3a2f10; --accentbg:#12304d;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.7 -apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:28px 16px 80px}
+header h1{font-size:26px;margin:0 0 6px;letter-spacing:.5px}
+header p{margin:0;color:var(--mute)}
+nav{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 6px}
+nav a{font-size:13px;color:var(--accent);text-decoration:none;border:1px solid var(--line);background:var(--card);padding:4px 10px;border-radius:999px}
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin-top:18px}
+h2{font-size:19px;margin:0 0 12px;padding-left:10px;border-left:4px solid var(--accent)}
+h3{font-size:15px;margin:20px 0 8px}
+p{margin:8px 0}
+ul,ol{margin:8px 0;padding-left:22px}
+li{margin:3px 0}
+.tw{overflow-x:auto;margin:10px 0}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--soft);font-weight:600;white-space:nowrap}
+td.n,th.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+code{font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--soft);padding:1px 5px;border-radius:4px}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0}
+.kpi div{background:var(--soft);border-radius:8px;padding:10px 12px}
+.kpi b{display:block;font-size:18px;font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--mute)}
+.tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:999px;white-space:nowrap}
+.tag.g{background:var(--goodbg);color:var(--good)} .tag.b{background:var(--badbg);color:var(--bad)}
+.tag.w{background:var(--warnbg);color:var(--warn)} .tag.a{background:var(--accentbg);color:var(--accent)}
+.note{border-left:4px solid var(--warn);background:var(--warnbg);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px;margin:14px 0}
+.st{flex:1 1 150px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--soft)}
+.st b{display:block;color:var(--accent);font-size:14px}
+.st small{color:var(--mute);display:block;line-height:1.5;margin-top:4px}
+.ar{align-self:center;color:var(--mute);font-size:18px}
+.pos{color:var(--good)} .neg{color:var(--bad)} .mute{color:var(--mute)}
+footer{color:var(--mute);font-size:13px;margin-top:22px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>P3 接针策略说明</h1>
+  <p>Bitget BTCUSDT 永续 · 急跌接多 / 急涨接空 · 止损后熔断 60 分钟 · 版本 <code>bg-wick-p3-btc-v1</code> · 整理于 2026-11-10</p>
+</header>
+
+<nav>
+  <a href="#s1">概览</a><a href="#s2">状态机</a><a href="#s3">入场触发</a><a href="#s4">挂单</a><a href="#s5">撤单</a>
+  <a href="#s6">平仓</a><a href="#s7">库存管理</a><a href="#s8">止损与风控</a><a href="#s9">参数表</a>
+  <a href="#s10">预期与现状</a><a href="#s11">已否决的改动</a><a href="#s12">待观察任务</a>
+</nav>
+
+<section id="s1">
+  <h2>一、概览</h2>
+  <p>价格在 10 秒内被主动单快速砸下去（或拉上去），并且同向成交量明显放大时，等它从极值反弹一点，在极值下方挂三层买单接货。接到后在成本上方 5 bp 挂卖单止盈。大多数时候价格会回一点，赚一个小的止盈；少数时候价格继续单边走，三层都接满后在 40 bp 处止损。止损后停 60 分钟，避开单边行情的后续。</p>
+  <p>这是一个高胜率、小盈利、大亏损的结构：单次止盈约 +6 bp，单次止损约 −41 bp，打平需要约 87% 的止盈比例。回测止盈比例 93%。</p>
+  <div class="kpi">
+    <div><b>BTCUSDT</b><span>只做这一个合约，不对冲</span></div>
+    <div><b>0.001 BTC</b><span>每层数量（标定期），最多 3 层</span></div>
+    <div><b>−0.5 / +1.5 bp</b><span>挂单返佣 / 吃单费</span></div>
+    <div><b>10 bp / 10 秒</b><span>触发幅度</span></div>
+    <div><b>+5 / −40 bp</b><span>止盈 / 止损（相对成本）</span></div>
+    <div><b>60 分钟</b><span>止损后熔断</span></div>
+  </div>
+  <div class="tw"><table>
+    <tr><th>项</th><th>当前值</th></tr>
+    <tr><td>运行位置</td><td>test2，trader-006，单元 <code>bg-wick-btc</code>，账户 <code>bitget_account_003</code>（统一账户，单向持仓，全仓 20 倍）</td></tr>
+    <tr><td>阶段</td><td><span class="tag w">Run B 标定中</span> 2026-11-09 16:52 UTC 起，小数量跑满 7 个 UTC 日后判断是否放大到每层 0.01 BTC</td></tr>
+    <tr><td>参数真源</td><td>交接规格 <code>docs/bitget-p3-wick-handoff.md</code>；实盘配置 <code>qflow/config/config.rust-trader-test2-006.yaml</code>。标定期参数不改</td></tr>
+    <tr><td>行情与时间</td><td>Bitget 一档盘口加公共成交；所有判断用交易所时间戳，不用本地时间</td></tr>
+  </table></div>
+</section>
+
+<section id="s2">
+  <h2>二、状态机</h2>
+  <div class="flow">
+    <div class="st"><b>空闲 IDLE</b><small>等待触发。空仓，无挂单</small></div><div class="ar">→</div>
+    <div class="st"><b>已触发 ARMED</b><small>跟踪极值，等反弹 2 bp 确认。180 秒内不确认就放弃</small></div><div class="ar">→</div>
+    <div class="st"><b>梯子 LADDER</b><small>三层挂单，存活 180 秒。一层都没成交就回空闲</small></div><div class="ar">→</div>
+    <div class="st"><b>持仓 IN_POSITION</b><small>挂止盈单；监控止损和到时</small></div><div class="ar">→</div>
+    <div class="st"><b>空闲 或 熔断 COOLDOWN</b><small>止盈出场回空闲；止损类出场进入 60 分钟熔断</small></div>
+  </div>
+  <p>同一时刻只有一个回合、只持一个方向。触发信号的计算与状态机独立，一直在跑；状态机忙或熔断时，信号照样记录但被丢弃。</p>
+</section>
+
+<section id="s3">
+  <h2>三、入场触发信号</h2>
+  <p>每次 Bitget 一档盘口更新时评估一次。下面以急跌接多为例，急涨接空完全镜像。</p>
+  <div class="tw"><table>
+    <tr><th>条件</th><th>定义</th><th>参数</th></tr>
+    <tr><td>1. 幅度</td><td>中间价 = (买一 + 卖一) / 2。当前中间价相对过去 10 秒内最高中间价的跌幅达到阈值</td><td>跌幅 ≥ 10 bp，窗口 10 秒</td></tr>
+    <tr><td>2. 流量门</td><td>过去 10 秒内卖方主动成交的名义额，不低于参考中位数的若干倍。参考中位数取过去 1 小时内 360 个不重叠 10 秒窗口的卖方主动名义额</td><td>≥ 5 倍，且当前窗口成交额大于 0</td></tr>
+    <tr><td>3. 武装</td><td>该方向处于武装状态。触发一次后解除武装，直到跌幅收窄到阈值以内才重新武装，防止同一段下跌反复触发</td><td>跌幅 &lt; 5 bp 重新武装</td></tr>
+  </table></div>
+  <p>三个条件同时满足即产生一个触发信号。信号是否被接受为新回合，还要过下面的门：</p>
+  <div class="tw"><table>
+    <tr><th>不接受的情况</th><th>日志里的原因</th></tr>
+    <tr><td>已有回合在进行（已触发、梯子在挂或持仓中）</td><td><code>busy</code></td></tr>
+    <tr><td>处于止损后的 60 分钟熔断期</td><td><code>cooldown</code></td></tr>
+    <tr><td>该方向被配置关闭（<code>enable_long</code> / <code>enable_short</code>）</td><td>方向关闭</td></tr>
+    <tr><td>开新门关闭：停机、盘口超过 3 秒不更新、公共成交超过 3 秒无数据、资金费结算前 60 秒、当日亏损达到安全阀</td><td><code>gate_closed</code></td></tr>
+  </table></div>
+  <ul>
+    <li>流量门的有效参考窗口少于 30 个时不触发。进程启动后约 5 分钟内不会有触发。</li>
+    <li>被丢弃的信号同样消耗武装状态，也全部写入日志，供事后分析。</li>
+    <li>流量门是相对量，已经随行情变化；幅度 10 bp 是固定值。</li>
+  </ul>
+</section>
+
+<section id="s4">
+  <h2>四、挂单信号</h2>
+  <h3>4.1 确认</h3>
+  <p>触发后持续记录中间价的最低点。当中间价从最低点反弹 2 bp 时确认，立刻挂梯子。触发后 180 秒内没有确认则放弃，回到空闲。</p>
+  <h3>4.2 进场梯子</h3>
+  <div class="tw"><table>
+    <tr><th>项</th><th>规则</th></tr>
+    <tr><td>基准价</td><td>确认时的买一价与触发以来最低点，取较低者</td></tr>
+    <tr><td>三层价格</td><td>基准价下方 0 / 5 / 10 bp，向下取整到最小价位（0.1）</td></tr>
+    <tr><td>每层数量</td><td>1 层 = 0.001 BTC（标定期）</td></tr>
+    <tr><td>订单类型</td><td>只挂单（post_only）。价格不低于卖一的那一层不挂</td></tr>
+    <tr><td>是否追价</td><td>不追。挂出后位置固定</td></tr>
+    <tr><td>存活时间</td><td>从确认起 180 秒</td></tr>
+  </table></div>
+  <h3>4.3 止盈单</h3>
+  <div class="tw"><table>
+    <tr><th>项</th><th>规则</th></tr>
+    <tr><td>何时挂</td><td>任意一层成交后立刻挂；之后每多成交一层，撤掉旧止盈单并按新成本、新数量重挂</td></tr>
+    <tr><td>价格</td><td>成本价上方 5 bp，向上取整到最小价位。如果该价不高于买一，改挂在卖一</td></tr>
+    <tr><td>数量</td><td>当前已成交的全部数量</td></tr>
+    <tr><td>订单类型</td><td>只挂单。部分成交后剩余部分留在原价继续挂</td></tr>
+    <tr><td>重挂顺序</td><td>先撤旧单，等撤单确认后再挂新单，不会先挂后撤</td></tr>
+  </table></div>
+  <p>成本价 = 已成交各层的成交量加权均价，以交易所回报的实际成交为准。</p>
+</section>
+
+<section id="s5">
+  <h2>五、撤单信号</h2>
+  <div class="tw"><table>
+    <tr><th>触发条件</th><th>撤哪些单</th><th>之后</th></tr>
+    <tr><td>梯子挂满 180 秒</td><td>还没成交的梯子层</td><td>一层都没成交则回空闲；有成交则继续持仓</td></tr>
+    <tr><td>止盈单全部成交，回合结束</td><td>剩余的梯子层</td><td>回空闲，不熔断</td></tr>
+    <tr><td>又有一层梯子成交，成本变了</td><td>旧的止盈单</td><td>撤单确认后按新成本重挂</td></tr>
+    <tr><td>止损或持仓到时</td><td>止盈单和全部剩余梯子</td><td>等这些单都有终态后，吃单全平</td></tr>
+    <tr><td>盘口超过 3 秒不更新</td><td>梯子</td><td>不开新回合；行情恢复后自动继续。已有持仓照常管理</td></tr>
+    <tr><td>持仓中盘口超过 10 秒不更新</td><td>止盈单</td><td>吃单全平，按止损类处理，进入熔断</td></tr>
+    <tr><td>停机：限频错误连续 3 次、只挂单连续被拒 5 次、强平保护触发</td><td>梯子。止盈单保留</td><td>只允许出场，不开新。需人工恢复</td></tr>
+    <tr><td>公共成交超过 3 秒无数据</td><td>不撤单</td><td>只是不接受新触发。2026-11-09 17:44 UTC 修复前会误撤梯子</td></tr>
+  </table></div>
+  <p>挂单和撤单合计限速每秒 5 次。超限时排队，止损和撤止盈这类出场操作优先。</p>
+</section>
+
+<section id="s6">
+  <h2>六、平仓信号</h2>
+  <div class="tw"><table>
+    <tr><th>类型</th><th>条件</th><th>方式</th><th>之后</th></tr>
+    <tr><td><span class="tag g">止盈</span></td><td>止盈挂单被吃</td><td>挂单成交，收返佣</td><td>回空闲，可立即接新触发</td></tr>
+    <tr><td><span class="tag b">止损</span></td><td>中间价不高于成本价下方 40 bp</td><td>吃单全平</td><td>熔断 60 分钟</td></tr>
+    <tr><td><span class="tag w">到时</span></td><td>第一层成交后满 1800 秒仍有持仓</td><td>吃单全平</td><td>熔断 60 分钟</td></tr>
+    <tr><td><span class="tag w">行情中断</span></td><td>持仓中盘口超过 10 秒不更新</td><td>吃单全平</td><td>熔断 60 分钟</td></tr>
+    <tr><td><span class="tag a">外部持平</span></td><td>强平保护或人工已把仓位平掉</td><td>策略只做收尾记录</td><td>按停机流程</td></tr>
+  </table></div>
+  <p>同一时刻多个条件同时成立时，优先级为止损、止盈、到时。策略不做日终平仓。</p>
+  <h3>吃单出场的执行顺序</h3>
+  <ol>
+    <li>撤掉止盈单和全部剩余梯子，等它们全部有终态。这样避免自己的吃单和自己的挂单成交。</li>
+    <li>按当时实际持仓发一张限价立即成交单，价格为对手一档再让 2 个最小价位。</li>
+    <li>没有全部成交的部分用市价单补完。</li>
+  </ol>
+  <p>实盘唯一一次止损的实测：撤单 22 毫秒，限价单 59 毫秒且零成交，市价单 10 毫秒，合计 81 毫秒，滑点 3.3 bp。回测假设滑点为 0。</p>
+</section>
+
+<section id="s7">
+  <h2>七、库存管理</h2>
+  <div class="tw"><table>
+    <tr><th>项</th><th>规则</th></tr>
+    <tr><td>最大持仓</td><td>3 层。标定期 0.003 BTC，约 225 USDT 名义；放大后 0.03 BTC，约 2,250 USDT</td></tr>
+    <tr><td>方向</td><td>同一时刻只持一个方向，只有一个回合</td></tr>
+    <tr><td>加仓</td><td>只通过回合开始时挂好的三层梯子被动加仓。梯子之外不追加、不补仓</td></tr>
+    <tr><td>减仓</td><td>只有两条路：止盈挂单成交，或吃单全平。没有分批止盈，没有按层数减仓</td></tr>
+    <tr><td>回合之间</td><td>空仓。不跨回合留库存，单次持仓最长 30 分钟</td></tr>
+    <tr><td>对冲</td><td>不对冲</td></tr>
+    <tr><td>在途订单</td><td>最多 4 张（3 张梯子加 1 张止盈），同侧最多 3 张</td></tr>
+    <tr><td>来历不明的仓位</td><td>账户有仓但策略没有对应回合超过 5 秒：关闭开新并告警，不自动平仓</td></tr>
+    <tr><td>重启</td><td>重启不恢复回合。计划内部署必须先暂停并等空仓</td></tr>
+  </table></div>
+  <div class="note">亏损几乎全部来自三层打满的回合。只成交一两层的回合整体为正，三层全成交的回合整体为负。这是这个策略的主要风险来源。</div>
+</section>
+
+<section id="s8">
+  <h2>八、止损规则与风控</h2>
+  <h3>8.1 回合内止损</h3>
+  <div class="tw"><table>
+    <tr><th>规则</th><th>阈值</th><th>说明</th></tr>
+    <tr><td>价格止损</td><td class="n">成本价 ∓ 40 bp</td><td>以中间价判断。三层打满时一次约 −41 bp，按每层 0.01 BTC 约 −9.2 USDT；实盘含滑点 −44.5 bp</td></tr>
+    <tr><td>时间止损</td><td class="n">1800 秒</td><td>从第一层成交起算</td></tr>
+    <tr><td>行情中断止损</td><td class="n">10 秒</td><td>持仓中盘口不更新</td></tr>
+  </table></div>
+  <h3>8.2 回合之外</h3>
+  <div class="tw"><table>
+    <tr><th>规则</th><th>阈值</th><th>说明</th></tr>
+    <tr><td>止损后熔断</td><td class="n">60 分钟</td><td>任何止损类出场后，两个方向都不开新回合。这是目前唯一有效的单边识别手段</td></tr>
+    <tr><td>当日安全阀</td><td class="n">−1.5 USDT</td><td>按 UTC 日累计已完成回合净值。触发后当日不开新，持仓照常出场。放大到 0.01 后约为 −15</td></tr>
+    <tr><td>资金费窗口</td><td class="n">60 秒</td><td>UTC 00 / 08 / 16 点结算前不开新回合</td></tr>
+    <tr><td>停机</td><td class="n">见第五节</td><td>限频、连续拒单、强平保护。需人工恢复</td></tr>
+  </table></div>
+  <h3>8.3 只记录、不生效的影子门</h3>
+  <ul>
+    <li><b>强平门</b>：触发前 60 秒币安有同向强平，或币安 5 分钟持仓量降幅超过 0.2%，则标记“会挡”。另记两个变体：强平条数至少 3 条才挡、不看持仓量。</li>
+    <li><b>Bitget 持仓量变化</b>：只记数值，不设阈值。</li>
+    <li>两者都不拦单，用于 Run B 期间前向验证。</li>
+  </ul>
+</section>
+
+<section id="s9">
+  <h2>九、参数总表</h2>
+  <div class="tw"><table>
+    <tr><th>参数</th><th>配置键</th><th class="n">值</th><th>性质</th></tr>
+    <tr><td>触发窗口</td><td><code>window_ms</code></td><td class="n">10 秒</td><td>固定</td></tr>
+    <tr><td>触发幅度</td><td><code>trigger_bp</code></td><td class="n">10 bp</td><td>固定</td></tr>
+    <tr><td>重新武装</td><td><code>rearm_bp</code></td><td class="n">5 bp</td><td>固定</td></tr>
+    <tr><td>流量倍数</td><td><code>flow_mult</code></td><td class="n">5 倍</td><td>相对量，随行情变</td></tr>
+    <tr><td>流量参考窗口数 / 最少有效数</td><td><code>flow_ref_windows</code> / <code>flow_min_windows</code></td><td class="n">360 / 30</td><td>固定</td></tr>
+    <tr><td>确认反弹</td><td><code>confirm_bp</code></td><td class="n">2 bp</td><td>固定</td></tr>
+    <tr><td>确认超时</td><td><code>confirm_timeout_ms</code></td><td class="n">180 秒</td><td>固定</td></tr>
+    <tr><td>梯子间距</td><td><code>ladder_bp</code></td><td class="n">0 / 5 / 10 bp</td><td>固定</td></tr>
+    <tr><td>梯子存活</td><td><code>ladder_live_ms</code></td><td class="n">180 秒</td><td>固定</td></tr>
+    <tr><td>每层数量</td><td><code>lot</code></td><td class="n">0.001 BTC</td><td>标定期；放行后 0.01</td></tr>
+    <tr><td>止盈</td><td><code>tp_bp</code></td><td class="n">5 bp</td><td>固定</td></tr>
+    <tr><td>止损</td><td><code>sl_bp</code></td><td class="n">40 bp</td><td>固定</td></tr>
+    <tr><td>最长持仓</td><td><code>max_hold_ms</code></td><td class="n">1800 秒</td><td>固定</td></tr>
+    <tr><td>熔断</td><td><code>cooldown_ms</code></td><td class="n">60 分钟</td><td>固定</td></tr>
+    <tr><td>吃单容差</td><td><code>ioc_tolerance_ticks</code></td><td class="n">2 个最小价位</td><td>待定，见待观察任务</td></tr>
+    <tr><td>盘口超龄 / 持仓中超龄</td><td><code>max_quote_age_ms</code> / <code>position_stale_exit_ms</code></td><td class="n">3 秒 / 10 秒</td><td>固定</td></tr>
+    <tr><td>成交流超龄</td><td><code>trade_stale_ms</code></td><td class="n">3 秒</td><td>固定</td></tr>
+    <tr><td>资金费窗口</td><td><code>funding_block_s</code></td><td class="n">60 秒</td><td>固定</td></tr>
+    <tr><td>当日安全阀</td><td><code>daily_loss_stop_usdt</code></td><td class="n">1.5 USDT</td><td>随数量等比放大</td></tr>
+    <tr><td>限速</td><td><code>ops_per_s</code></td><td class="n">5 次/秒</td><td>固定</td></tr>
+    <tr><td>方向开关</td><td><code>enable_long</code> / <code>enable_short</code></td><td class="n">都开</td><td>接空待判，见待观察任务</td></tr>
+  </table></div>
+  <h3>两个方向的镜像关系</h3>
+  <div class="tw"><table>
+    <tr><th>环节</th><th>急跌接多</th><th>急涨接空</th></tr>
+    <tr><td>触发</td><td>10 秒内较最高点跌 ≥ 10 bp；卖方主动额 ≥ 5 倍中位</td><td>10 秒内较最低点涨 ≥ 10 bp；买方主动额 ≥ 5 倍中位</td></tr>
+    <tr><td>确认</td><td>从最低点反弹 2 bp</td><td>从最高点回落 2 bp</td></tr>
+    <tr><td>梯子</td><td>买单，min(买一, 最低点) 下方 0 / 5 / 10 bp</td><td>卖单，max(卖一, 最高点) 上方 0 / 5 / 10 bp</td></tr>
+    <tr><td>止盈</td><td>卖单，成本上方 5 bp</td><td>买单，成本下方 5 bp</td></tr>
+    <tr><td>止损</td><td>中间价 ≤ 成本下方 40 bp</td><td>中间价 ≥ 成本上方 40 bp</td></tr>
+  </table></div>
+</section>
+
+<section id="s10">
+  <h2>十、预期与现状</h2>
+  <h3>10.1 回测预期（每层 0.01 BTC，金额 USDT）</h3>
+  <div class="tw"><table>
+    <tr><th>窗口</th><th class="n">净</th><th>备注</th></tr>
+    <tr><td>样本内 09-27 至 10-31，35 天</td><td class="n pos">+183</td><td>正日 23/35，最大回撤 31，止损类 51 次</td></tr>
+    <tr><td>样本外 11-01 至 11-07，7 天</td><td class="n pos">+36.9</td><td>7/7 正日，回撤 13.8，每回合 +3.2 bp</td></tr>
+    <tr><td>11-08 单日</td><td class="n neg">−18.1</td><td>三层打满的回合</td></tr>
+    <tr><td>11-09 单日</td><td class="n neg">−6.3</td><td>接多 +15.8，接空 −22.1；4 次价格止损全在接空</td></tr>
+    <tr><td>样本外 11-01 至 11-09 合计，9 天</td><td class="n pos">+12.5</td><td></td></tr>
+  </table></div>
+  <div class="tw"><table>
+    <tr><th>结构指标</th><th class="n">回测值</th></tr>
+    <tr><td>触发 / 天</td><td class="n">约 35（实际在 1 到 229 之间，随波动剧烈变化）</td></tr>
+    <tr><td>回合 / 天</td><td class="n">23 至 25</td></tr>
+    <tr><td>梯子成交率（至少成交一层）</td><td class="n">82%</td></tr>
+    <tr><td>出场构成：止盈 / 止损 / 到时</td><td class="n">93% / 5 至 6% / 1%</td></tr>
+    <tr><td>持仓时间中位数</td><td class="n">约 40 秒；止盈 33 秒，止损 4.5 分钟</td></tr>
+    <tr><td>方向（35 天）</td><td class="n">接多 +127，接空 +11</td></tr>
+  </table></div>
+  <div class="note"><b>参数有过拟合嫌疑。</b>把触发窗口、幅度、流量门周围 18 个邻近参数格放在一起比，当前参数 44 天 +196 是最高的一格，18 格平均只有 +44，相邻格会翻号。真实水平应在每天 +1 到 +4.5 USDT 之间（每层 0.01）。</div>
+
+  <h3>10.2 实盘 Run B 首次读数（11-09 16:52 至 11-10 02:59 UTC，10.1 小时，每层 0.001）</h3>
+  <div class="tw"><table>
+    <tr><th>项</th><th class="n">实盘</th><th class="n">回测对照</th></tr>
+    <tr><td>触发</td><td class="n">29，接受 10</td><td class="n">同日 28 个全部对上</td></tr>
+    <tr><td>梯子成交率</td><td class="n">75%（6/8）</td><td class="n">82%</td></tr>
+    <tr><td>止盈回合</td><td class="n">5 个，各 +6.0 bp</td><td class="n">各 +6.0 bp</td></tr>
+    <tr><td>止损回合</td><td class="n">1 个，−44.5 bp</td><td class="n">−41.1 bp</td></tr>
+    <tr><td>合计净</td><td class="n neg">−0.594 USDT</td><td class="n neg">同窗口 −0.519</td></tr>
+    <tr><td>方向</td><td class="n">多 +0.179，空 −0.773</td><td class="n"></td></tr>
+    <tr><td>挂单确认延迟</td><td class="n">中位 6 毫秒</td><td class="n">假设 4 毫秒</td></tr>
+  </table></div>
+  <p>同日逐回合对回测：9 个回合的挂价、成交层数、出场类型全部相同。差异只有止损时的吃单滑点 3.3 bp。回测可以当真。</p>
+
+  <h3>10.3 放大到每层 0.01 的放行条件</h3>
+  <ul>
+    <li>跑满至少 7 个 UTC 日，覆盖至少一个周末。</li>
+    <li>每回合净不低于 +2.2 bp（回测 +3.2 减 1）。</li>
+    <li>梯子成交率不低于 72%（回测 82% 减 10 个百分点）。</li>
+    <li>7 天净为正。</li>
+  </ul>
+</section>
+
+<section id="s11">
+  <h2>十一、已测试并否决的改动</h2>
+  <p>以下方向都已用数据验证过，不要重复提议。</p>
+  <div class="tw"><table>
+    <tr><th>改动</th><th>结果</th></tr>
+    <tr><td>时间衰减止盈、按层数止损、三层保本、去掉第三层、分批止盈</td><td>样本外均不优于原出场</td></tr>
+    <tr><td>低点下方结构止损</td><td>把更多坏回合接进来，净值更差</td></tr>
+    <tr><td>单边行情识别（340 个特征变体）</td><td>样本外效果等同随机跳过。只有熔断有效</td></tr>
+    <tr><td>活跃期抬高触发阈值</td><td>7 种规则都在噪声内，无增益</td></tr>
+    <tr><td>安静期降低阈值，阈值取滚动标准差的倍数，出场等比缩放</td><td>开发周 12 格全负；降阈值接到的回合两周都亏，止损次数翻倍</td></tr>
+    <tr><td>三层打满后用回合内信号提前止损或收紧止损</td><td>最近 9 天有效，此前 35 天相反，44 天合计全负。转为前向观察</td></tr>
+    <tr><td>吃单进场、只挂买一进场</td><td>全负或接近零</td></tr>
+    <tr><td>ETH</td><td>超额全负，不适用</td></tr>
+    <tr><td>多因子模型打分</td><td>未做。止损样本 44 天只有 70 次，不足以训练</td></tr>
+  </table></div>
+</section>
+
+<section id="s12">
+  <h2>十二、待观察任务</h2>
+  <div class="tw"><table>
+    <tr><th>#</th><th>任务</th><th>判断方法</th><th>时点</th><th>状态</th></tr>
+    <tr><td>1</td><td>Run B 放行判断</td><td>每个 UTC 日追加读数，满 7 日对照第 10.3 节四项条件</td><td>最早 11-17</td><td><span class="tag w">进行中</span></td></tr>
+    <tr><td>2</td><td>接空方向是否关闭</td><td>7 日读数时按方向单独算。实盘接空每回合净为负则关 <code>enable_short</code>，不需改代码。现有三处证据同向：35 天回测接空远弱于接多、实盘 4 回合为负、11-09 回测接空 −22</td><td>随任务 1</td><td><span class="tag w">需用户拍板</span></td></tr>
+    <tr><td>3</td><td>止损吃单滑点与容差</td><td>累计至少 5 次止损后，看限价单是否总是零成交、滑点是否系统性大于 0，再决定是否改 <code>ioc_tolerance_ticks</code>。现在只有 1 次，3.3 bp</td><td>攒够样本</td><td><span class="tag a">等样本</span></td></tr>
+    <tr><td>4</td><td>强平门影子</td><td>比较“会挡”与“不会挡”两组回合的实际净值和止损率。持续更差则另起预登记定阈值后转正</td><td>约 11-23</td><td><span class="tag a">等样本</span></td></tr>
+    <tr><td>5</td><td>Bitget 持仓量变化影子</td><td>与任务 4 一起读，看是否比币安持仓量更能反映本所去杠杆</td><td>约 11-23</td><td><span class="tag a">等样本</span></td></tr>
+    <tr><td>6</td><td>回合内信号止损影子</td><td>每次读数时用日志里被跳过的触发和当时买卖价，算“三层打满后出现逆向信号就平仓”的结果。实盘不改</td><td>约 11-23</td><td><span class="tag a">等样本</span></td></tr>
+    <tr><td>7</td><td>熔断的实际贡献</td><td>11-09 熔断跳过的回合若照常进场合计为正。继续跟踪熔断期内被跳过触发的回测结局</td><td>随对回测</td><td><span class="tag a">观察</span></td></tr>
+    <tr><td>8</td><td>止盈单被吃速度</td><td>放大数量后是否仍能在到价后几秒内吃完。现在按公共成交反推，5 张里 4 张在 2 秒内，样本太小</td><td>放大后</td><td><span class="tag a">等样本</span></td></tr>
+    <tr><td>9</td><td>记账修复验证</td><td>11-10 03:52 UTC 重建后，第一个多层回合的日志净值是否与按成交重算一致</td><td>下次读数</td><td><span class="tag a">待验证</span></td></tr>
+    <tr><td>10</td><td>放行前再做一次同日对回测</td><td>逐触发、逐回合对齐。需要开研究机</td><td>任务 1 之前</td><td><span class="tag a">待办</span></td></tr>
+  </table></div>
+</section>
+
+<footer>
+  来源：mm-hub <code>docs/bitget-p3-wick-handoff.md</code>、<code>docs/bitget-p3-wick-runB-log.md</code>、<code>docs/bitget-mm-iteration-log.md</code>、<code>docs/bitget-liquidation-flow.md</code>；qflow 实现设计 <code>openspec/changes/add-bitget-wick-reversion-strategy/design.md</code> 与实盘配置。实盘数字截至 2026-11-10 02:59 UTC。
+</footer>
+
+</div>
+</body>
+</html>
